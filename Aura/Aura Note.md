@@ -23,7 +23,32 @@
 
 ## 2.2设置版本控制
 
-在github上新建一个仓库
+在github上新建一个仓库，命名为GAS_Aura
+
+```
+添加README.md文件
+添加gitignore文件
+```
+
+```
+# gitignore
+Binaries
+DerivedDataCache
+Intermediate
+Saved
+Build
+
+.vscode
+.Vs
+*.vc.db
+.opensdf
+.opendb
+*.sdf
+*.sln
+*.suo
+*.xcodeproj
+*.xcworkspace
+```
 
 ## 2.3基础角色类（AuraCharacterBase）
 
@@ -80,9 +105,9 @@ Weapon->SetCollision(NoCollision);
 在状态机中添加节点IdleWalkRun，节点动画设置为混合空间动画IdleWalkRun。
 在蓝图中获取变量AuraCharacter，CharacterMovement，并在update中获取CharacterMovement中的速度GroundSpeed即可使用IdleWalkRun
 
-添加一个动画模板（暂时先不用选择骨架），作同AuraCharacter的操作，在混合空间一步时，右键添加BlendSpacePlayer，最后将GroundSpeed连接至X即可。
+敌人动画类将是一个动画模板，添加一个动画模板（暂时先不用选择骨架），作同AuraCharacter的操作，在混合空间一步时，右键添加BlendSpacePlayer，最后将GroundSpeed连接至X即可。
 
-新建动画蓝图，选择模板和骨骼，在资产覆盖中将BlendSpacePlayer设置为对应网格体的动画。
+新建动画蓝图，选择模板和骨骼，在资产覆盖（Anim Graph Overrides）中将BlendSpacePlayer设置为对应网格体的动画。
 
 接下来自行制作哥布林弹弓手的敌人类和敌人动画类。
 
@@ -92,7 +117,109 @@ Weapon->SetCollision(NoCollision);
 
 在BluePrints文件夹中新建Input/InputActions文件夹
 
-右键新增类Input Action命名为IA_Move和Input Mapping Context类。
+右键新增类Input Action命名为IA_Move，
+
+双击打开IA_Move，将ValueType设置成处理二维移动Axis2D（Vector2D）
+
+3D空间一般将角色的前向向量看作是X轴，但是在二维中，前后是WS，是y轴。
+
+接下来通过输入上下文映射将输入和角色连接起来。
+
+新建Input Mapping Context类，命名为IMC_AuraContext，添加Mapping设置值为IA_Move，再设置向右移动按键D，按键D是向右移动在x轴上输入正值数据，而向左移动A键输出负值，在按键的modify中设置Index[0]为Negate，我们把移动视为x轴，由此我们只需要选中x轴，即是否定x轴，输出负值，取消勾选y和z。前后WS需要在modify中添加转换Swizzle Input Axis Values。下拉菜单中的Order中的值为YXZ，即输入会先入Y轴。
+
+接下来需要新建一个玩家控制器类到Player文件夹中，命名为AuraPlayController。
+
+## 2.8Aura玩家控制器
+
+在**玩家控制器**添加**构造函数**和BeginPlay()，在控制器中，我们想要确保这个控制器能够被复制，需要在控制器的构造函数中将设置bReplicate=true。复制就是在多人游戏服务器中某个实体发生变化的时候，其他客户端能够接收到这个变化。
+
+我们要在玩家控制器中添加TObjectPtr<UInputMappingContext>类型的变量。
+
+```
+UPROPERTY(EditAnywhere,Catgory="Input")
+TObjectPtr<UInputMappingContext> AuraContext;
+```
+
+还需要再Aura.build.cs中添加Enhanced Input包引用。
+
+再在BeginPlay函数中添加如下代码
+
+```
+void AAuraPlayerController: :BeginPlay()
+{
+	Super::BeginPlay();
+	//如果AuraContext，任何输入都无响应，问题很严重，需要停止运行
+	check(AuraContext);
+	
+	//访问增强输入的本地玩家的子系统，本地指针子系统，子系统是单例模式，运行期间只能存在一个
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
+	check(Subsystem);
+	//添加Aura输入映射，设置优先级为0
+	Subsystem->AddMappingContext(AuraContext, 0);
+
+	//显示鼠标
+	bShowMouseCursor = true;
+	//将显示的鼠标设置为默认鼠标
+	DefaultMouseCursor = EMouseCursor::Default;
+	
+	//设置输入方式，使用键盘输入
+	FInputModeGameAndUI InputModeData;
+	//设置鼠标不会绑定在窗口内
+	InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	//设置在视口内的鼠标不会被隐藏
+	InputModeData.SetHideCursorDuringCapture(false);
+	//传入数据设置光标
+	SetInputMode(InputModeData);
+}
+```
+
+## 2.9移动输入
+
+```
+// 定义 AuraPlayerController 类的 SetupInputComponent 方法，用于设置输入组件
+void AAuraPlayerController::SetupInputComponent()
+{
+    // 调用父类的 SetupInputComponent 方法，确保父类的输入设置也被执行
+    Super::SetupInputComponent();
+
+    // 将 InputComponent 转换为 UEnhancedInputComponent 类型，并进行检查（确保转换成功）
+    UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent);
+
+    // 绑定动作 MoveAction 到当前控制器的 Move 方法，当动作被触发时执行 Move 方法
+    EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAuraPlayerController::Move);
+}
+
+// 定义 AuraPlayerController 类的 Move 方法，处理移动输入
+void AAuraPlayerController::Move(const FInputActionValue& InputActionValue)
+{
+    // 从输入动作值中获取 2D 向量输入（通常来自游戏手柄或键盘的移动输入）
+    const FVector2D InputAxisVector = InputActionValue.Get<FVector2D>();
+    // 获取控制器的旋转（用于确定移动方向）
+    const FRotator Rotation = GetControlRotation();
+    // 创建仅包含 Yaw（偏航）的旋转（忽略 Pitch 和 Roll）
+    const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
+
+    // 将 Yaw 旋转转换为旋转矩阵，并获取其 X 轴单位向量（前向方向）
+    const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+    // 将 Yaw 旋转转换为旋转矩阵，并获取其 Y 轴单位向量（右向方向）
+    const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+    // 获取当前控制的 Pawn（玩家角色）
+    if (APawn* ControlledPawn = GetPawn<APawn>())
+    {
+        // 基于前向方向和输入向量的 Y 分量（通常对应前后移动）添加移动输入
+        ControlledPawn->AddMovementInput(ForwardDirection, InputAxisVector.Y);
+        // 基于右向方向和输入向量的 X 分量（通常对应左右移动）添加移动输入
+        ControlledPawn->AddMovementInput(RightDirection, InputAxisVector.X);
+    }
+}
+```
+
+在UE新建蓝图类继承自AuraPlayController，命名为BP_AuraPlayerController，打开并设置AuraContext和MoveAction
+
+## 2.10游戏模式
+
+新建一个继承自GameModeBase的C++类，放在Game文件夹下，命名为AuraGameModeBase。
 
 ## 2.11敌人接口（Enemy Interface）
 
