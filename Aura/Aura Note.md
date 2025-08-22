@@ -287,29 +287,29 @@ TObjectPtr<UInputMappingContext> AuraContext;
 ```
 void AAuraPlayerController::BeginPlay()
 {
-	Super::BeginPlay();
-	//如果AuraContext，任何输入都无响应，问题很严重，需要停止运行
-	check(AuraContext);
-	
-	//访问增强输入的本地玩家的子系统，本地指针子系统，子系统是单例模式，运行期间只能存在一个
-	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
-	check(Subsystem);
-	//添加Aura输入映射，设置优先级为0
-	Subsystem->AddMappingContext(AuraContext, 0);
+    Super::BeginPlay();
+    //如果AuraContext，任何输入都无响应，问题很严重，需要停止运行
+    check(AuraContext);
 
-	//显示鼠标
-	bShowMouseCursor = true;
-	//将显示的鼠标设置为默认鼠标
-	DefaultMouseCursor = EMouseCursor::Default;
-	
-	//设置输入方式，使用键盘输入
-	FInputModeGameAndUI InputModeData;
-	//设置鼠标不会绑定在窗口内
-	InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-	//设置在视口内的鼠标不会被隐藏
-	InputModeData.SetHideCursorDuringCapture(false);
-	//传入数据设置光标
-	SetInputMode(InputModeData);
+    //访问增强输入的本地玩家的子系统，本地指针子系统，子系统是单例模式，运行期间只能存在一个
+    UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
+    check(Subsystem);
+    //添加Aura输入映射，设置优先级为0
+    Subsystem->AddMappingContext(AuraContext, 0);
+
+    //显示鼠标
+    bShowMouseCursor = true;
+    //将显示的鼠标设置为默认鼠标
+    DefaultMouseCursor = EMouseCursor::Default;
+
+    //设置输入方式，使用键盘输入
+    FInputModeGameAndUI InputModeData;
+    //设置鼠标不会绑定在窗口内
+    InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+    //设置在视口内的鼠标不会被隐藏
+    InputModeData.SetHideCursorDuringCapture(false);
+    //传入数据设置光标
+    SetInputMode(InputModeData);
 }
 ```
 
@@ -405,23 +405,23 @@ AAuraCharacter::AAuraCharacter()
 ```
 void AAuraPlayController::CrusorTrace()
 {
-	FHitResult CrusorHitResult;
-	GetHitResultUnderCursor(ECC_Visibility,false,CrusorHitResult);
+    FHitResult CrusorHitResult;
+    GetHitResultUnderCursor(ECC_Visibility,false,CrusorHitResult);
 
-	if (!CrusorHitResult.bBlockingHit)
-	{
-		return;
-	}
+    if (!CrusorHitResult.bBlockingHit)
+    {
+        return;
+    }
 
-	LastActor = ThisActor;
-	ThisActor = Cast<IEnemyInterface>(CrusorHitResult.GetActor());
-	
-	//伪代码
-	case 1:Last为空，This不为空，This高亮
-	case 2:Last为空，This空，什么都不做
-	case 3:Last不为空，This为空，Last取消高亮
-	case 4:Last不为空，This不为空，Last与This是同一个，什么都不做
-	case 3:Last不为空，This不为空，Last与This不是同一个，Last取消高亮，This高亮
+    LastActor = ThisActor;
+    ThisActor = Cast<IEnemyInterface>(CrusorHitResult.GetActor());
+
+    //伪代码
+    case 1:Last为空，This不为空，This高亮
+    case 2:Last为空，This空，什么都不做
+    case 3:Last不为空，This为空，Last取消高亮
+    case 4:Last不为空，This不为空，Last与This是同一个，什么都不做
+    case 3:Last不为空，This不为空，Last与This不是同一个，Last取消高亮，This高亮
 }
 ```
 
@@ -440,18 +440,18 @@ void AAuraPlayController::CrusorTrace()
 ```C++
 void AAuraEnemy::HighlightActor()
 {
-	bHighlightActor = true;
-	GetMesh()->SetRenderCustomDepth(true);
-	GetMesh()->SetCustomDepthStencilValue(CUSTOM_DEEPTH_RED);
-	Weapon->SetRenderCustomDepth(true);
-	Weapon->SetCustomDepthStencilValue(CUSTOM_DEEPTH_RED);
+    bHighlightActor = true;
+    GetMesh()->SetRenderCustomDepth(true);
+    GetMesh()->SetCustomDepthStencilValue(CUSTOM_DEEPTH_RED);
+    Weapon->SetRenderCustomDepth(true);
+    Weapon->SetCustomDepthStencilValue(CUSTOM_DEEPTH_RED);
 }
 
 void AAuraEnemy::UnHighlightActor()
 {
-	bHighlightActor = false;
-	GetMesh()->SetRenderCustomDepth(false);
-	Weapon->SetRenderCustomDepth(false);
+    bHighlightActor = false;
+    GetMesh()->SetRenderCustomDepth(false);
+    Weapon->SetRenderCustomDepth(false);
 }
 ```
 
@@ -603,7 +603,7 @@ FGameplayAttributeData Health;
 ```
 void UAuraAttributeSet::OnRep_Health(const FGameplayAttributeData& OldHealth) const
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAuraAttributeSet, Health, OldHealth);
+    GAMEPLAYATTRIBUTE_REPNOTIFY(UAuraAttributeSet, Health, OldHealth);
 }
 ```
 
@@ -613,9 +613,9 @@ void UAuraAttributeSet::OnRep_Health(const FGameplayAttributeData& OldHealth) co
 void UAuraAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 
-	Super: : GetLifetimeReplicatedProps( [&] OutLifetimeProps);
-	//注册健康能被复制，这对于任何东西想要被复制都是必须的
-	DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Health, COND_None, REPNOTIFY_Always);
+    Super: : GetLifetimeReplicatedProps( [&] OutLifetimeProps);
+    //注册健康能被复制，这对于任何东西想要被复制都是必须的
+    DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Health, COND_None, REPNOTIFY_Always);
 }
 ```
 
@@ -663,14 +663,14 @@ UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHi
 {
     //TODO: Change this to apply a Gameplay Effect. For now, using const_cast as a hack!
     if (IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(OtherActor))
-	{
+    {
         //AttributeSet为const类型，需要通过游戏效果进行改变。
         const UAuraAttributeSet* AuraAttributeSet = Cast<UAuraAttributeSet>( SrcASCInterface->GetAbilitySystemComponent()->GetAttributeSet(UAuraAttributeSet::StaticClass()));
         //将AttributeSet转换成非const类型，为了能够直接更改。
         UAuraAttributeSet* MutableAuraAttributeSet = const_cast<UAuraAttributeSet*>(AuraAttributeSet);
         MutableAuraAttributeSet->SetHealth( NewVal:AuraAttributeSet->GetHealth() + 25.f);
         Destroy();
-	}
+    }
 }
 ```
 
@@ -862,10 +862,10 @@ UOverlayWidgetController* GetOverlayWidgetController(const FWidgetControllerPara
 {
 if (OverlayWidgetController == nullptr)
 {
-	OverlayWidgetController = NewQbject<UOverlayWidgetController>(Outer:this, OverlayWidgetControllerClass);
-	OverlayWidgetController->SetWidgetControllerParams (WCParams);
+    OverlayWidgetController = NewQbject<UOverlayWidgetController>(Outer:this, OverlayWidgetControllerClass);
+    OverlayWidgetController->SetWidgetControllerParams (WCParams);
 
-	return OverlayWidgetController;
+    return OverlayWidgetController;
 }
 return OverlayWidgetController;
 };
@@ -954,11 +954,11 @@ FOnMaxHealtChangedSignature OnMaxHealthChanged;
 ```
 void UOverlayWidgetController::BoradcastInitialValues()
 {
-	const UAuraAttributeSet* AuraAttributeSet = CastChecked<UAuraAttributeSet>(AttributeSet);
+    const UAuraAttributeSet* AuraAttributeSet = CastChecked<UAuraAttributeSet>(AttributeSet);
 
-	//监听生命变化，并广播
-	OnHealthChanged.Broadcast(AuraAttributeSet->GetHealth());
-	OnMaxHealthChanged.Broadcast(AuraAttributeSet->GetMaxHealth());
+    //监听生命变化，并广播
+    OnHealthChanged.Broadcast(AuraAttributeSet->GetHealth());
+    OnMaxHealthChanged.Broadcast(AuraAttributeSet->GetMaxHealth());
 }
 ```
 
@@ -993,22 +993,22 @@ Widget->AddToViewport();
 ```
 void UOverlayWidgetController::BindCallbacksToDependencies()
 {
-	const UAuraAttributeSet* AuraAttributeSet = CastChecked<UAuraAttributeSet>(AttributeSet);
+    const UAuraAttributeSet* AuraAttributeSet = CastChecked<UAuraAttributeSet>(AttributeSet);
 
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		AuraAttributeSet->GetHealthAttribute()).AddUObject(this, &UOverlayWidgetController::HealthChanged);
-		
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		AuraAttributeSet->GetHealthAttribute()).AddUObject(this, &UOverlayWidgetController::MaxHealthChanged);
+    AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+        AuraAttributeSet->GetHealthAttribute()).AddUObject(this, &UOverlayWidgetController::HealthChanged);
+
+    AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+        AuraAttributeSet->GetHealthAttribute()).AddUObject(this, &UOverlayWidgetController::MaxHealthChanged);
 }
 
 void UOverlayWidgetController :: HealthChanged(const FOnAttributeChangeData& Data) const
 {
-	OnHealthChanged.Broadcast(Data.NewValue);
+    OnHealthChanged.Broadcast(Data.NewValue);
 }
 void UOverlayWidgetController :: MaxHealthChanged(const FOnAttributeChangeData& Data) const
 {
-	OnMaxHealthchanged.Broadcast(Data.NewValue);
+    OnMaxHealthchanged.Broadcast(Data.NewValue);
 }
 ```
 
@@ -1054,7 +1054,6 @@ FGameplayEffectSpecHandle EffectSpecHandle = TargetASC->MakeOutgoingSpec(Gamepla
 TargetASC->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
 
 }
-
 ```
 
 ## 6.3瞬时效果
@@ -1176,9 +1175,9 @@ Stack Period Refresh Policy
 UENUM(BlueprintType)
 enum class EEffectApplicationPolicy
 {
-	ApplyOnOverlap,
-	ApplyOnEndOverlap,
-	DoNotApply
+    ApplyOnOverlap,
+    ApplyOnEndOverlap,
+    DoNotApply
 }
 UENUM(BlueprintType)
 enum class EEffectRemovalPolicy
@@ -1260,7 +1259,7 @@ ActiveEffectHandles.Add(ActiveEffectHandle, TargetASC);
 ```
 if (bIsInfinite && InfiniteEffectRemovalPolicy == EEffectRemovalPolicy::RemoveOnEndOverlap)
 {
-	ActiveEffectHandles.Add(ActiveEffectHandle, TargetASC);
+    ActiveEffectHandles.Add(ActiveEffectHandle, TargetASC);
 }
 ```
 
@@ -1331,7 +1330,7 @@ ActiveEffectHandles.FindAndRemoveChecked(Handle);
 
 在AuraAttributeSet中增加以下函数。
 
-````
+```
 virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& MewValue) override
 {
 Super :: PreAttributeChange(Attribute, [&] NewValue);
@@ -1344,7 +1343,7 @@ if (Attribute == GetManaAttribute())
 
 NewValue = FMath :: Clamp(x:NewValue, Min:0.f, GetMaxMana());
 }
-````
+```
 
 ![image-20250818160507751](Aura Note.assets/image-20250818160507751.png)
 
@@ -1777,3 +1776,619 @@ ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Vigor);
 ![image-20250819154123024](Aura Note.assets/image-20250819154123024.png)
 
 ## 8.2使用游戏效果初始化数据
+
+## 8.2使用游戏效果初始化属性
+
+首先移除之前在BP_Aura Player State中添加的Default Starting Data。
+
+在AuraCharacterBase中新增成员变量
+
+```
+UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attributes")
+TSubclassOf<UGameplayEffect> DefaultPrimaryAttributes; W Unchanged in assets
+
+void InitializePrimaryAttributes()
+{
+check(IsValid(GetAbilitySystemComponent()));
+check(DefaultPrimaryAttributes);
+const FGameplayEffectContextHandle ContextHandle = GetAbilitySystemComponent()->MakeEffectContext();
+const FGameplayEffectSpecHandle SpecHandle = GetAbilitySystemComponent()->MakeOutgoingSpec(DefaultPrimaryAttributes, Level:1.f, ContextHandle);
+GetAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), Target:GetAbilitySystemComponent());
+};
+```
+
+**但与我们在服务器和客户端都调用的InitabilityActorInfo函数不同，这个游戏效果的应用其实只需在服务器端进行即可，原因是这些属性都设置为会被同步复制，只要我们在服务器中做出改变，客户端内容也会一起改变**
+
+总结就是在InitabilityActorInfo()中调用也可以。
+
+建立AbilitySystemComponent\GameEffect\PrimaryAttributes文件夹，在里面新建一个GameEffect蓝图类命名为GE_AuraPrimaryAttrbutes
+
+在其中设置Strength，Intelligence，Resilience，Vigor，Modify Op设置为Override接着编译好后在BP_AuraCharacter中设置DefaultPrimaryAttributes为GE_AuraPrimaryAttrbutes就好了。
+
+## 8.3属性集修饰基础
+
+Scalable Float Magnitude中有Attribute Based，可以基于其他属性为自己的属性复制，这样一来，某个属性就能从其他属性中衍生而来。
+
+新建一个EffectActor用来测试Scalable Float Magnitude中有Attribute Based效果。
+
+重点看有多个Attribute Based效果时的顺序
+
+## 8.4修饰命令运算顺序
+
+如果修饰符全部作用于同一个属性，并且都是加的话，结果就很直观。
+
+![image-20250821144153859](Aura Note.assets\image-20250821144153859.png)
+
+![image-20250821144341231](Aura Note.assets\image-20250821144341231.png)
+
+![image-20250821144440543](Aura Note.assets\image-20250821144440543.png)
+
+## 8.5修饰系数
+
+![image-20250821144745801](Aura Note.assets\image-20250821144745801.png)
+
+![image-20250821144908286](Aura Note.assets\image-20250821144908286.png)
+
+![image-20250821151251765](Aura%20Note.assets/54286b1657a4dff23604ce2b4615237a2a7bea4f.png)
+
+这样的操作是很自由的，但是不能仅仅依赖这一种方法随意创建复杂计算，后续还有其他方法创造更加复杂的计算。
+
+## 8.6派生属性
+
+![image-20250821153846685](Aura Note.assets\image-20250821153846685.png)
+
+![image-20250821153941855](Aura Note.assets\image-20250821153941855.png)
+
+## 8.7
+
+设置一个无限时长的游戏效果，用来给SecondaryAttributes设置相应的值，使得一旦力量改变，物理攻击也随之改变。
+
+```
+/*AuraCharacterBase新增*/
+
+UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Attributes")
+TSubclassOf<UGameplayEffect> DefaultSecondaryAttributes;
+
+/*将原来的InitializeDefaultAttributes函数替换成下面的函数ApplyEffectToSelf，并在函数InitializeDefaultAttributes中调用*/
+void AAuraCharacterBase::ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level)
+{
+check(IsValid(GetAbilitySystemComponent()));
+check(GameplayEffectClass);
+FGameplayEffectContextHandle ContextHandle = GetAbilitySystemComponent()->MakeEffectContext();
+/*
+有了ContextHandle还得添加源
+*/
+ContextHandle.AddSourceObject(this);
+
+const FGameplayEffectSpecHandle SpecHandle = GetAbilitySystemComponent()->MakeOutgoingSpec(GameplayEffectClass, Level, ContextHandle);
+GetAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), GetAbilitySystemComponent());
+}
+
+void AAuraCharacterBase::InitializeDefaultAttributes()
+{
+ApplyEffectToSelf(DefaultPrimaryAttributes, Level, 1.f);
+ApplyEffectToSelf(DefaultSecondaryAttributes, Level, 1.f);
+}
+```
+
+将PrimaryAttributes文件夹名字修改为DefaultAttributes，在里面新建一个继承自GameplayEffect的类命名为GE_SecondaryAttribute。
+
+![image-20250821172931528](Aura Note.assets\image-20250821172931528.png)
+
+一旦我们拥有大量的属性，使用Showdebug AbilitySystem，屏幕上的属性就会显示得很拥挤，没法全部显示出来。
+
+## 8.8自定义计算
+
+![image-20250821173455069](Aura Note.assets\image-20250821173455069.png)
+
+在项目中，等级不是一个属性，而是一个状态，是玩家状态类的一个变量
+
+![image-20250821173707834](Aura Note.assets\image-20250821173707834.png)
+
+![image-20250821173916027](Aura Note.assets\image-20250821173916027.png)
+
+![image-20250821174021344](Aura Note.assets\image-20250821174021344.png)
+
+敌人的Level变量放在敌人类中。
+
+新建一个CombatInterface，设置一个借口GetLevel();
+
+在AuraCharacterBase中继承CombatInterface，在AuraCharacter中实现GetLevel();
+
+编译后最后可能出现不能使用IEnemyInterfaceY的T指针，那么我们就使用裸指针。
+
+## 8.10自定义计算类
+
+我们制作一个自定义计算类，这样我们的最大生命值和最大法力值就不仅可以依赖数值，还可以依赖其他变量。
+
+在文件夹AbilitySystem/ModmagCalc中新建GameplayModMagnitudeCalculation类命名为MMC_MaxHealth
+
+类中可以实现函数
+
+```
+virtual float CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const override;
+```
+
+只要我们能拿到FGameplayEffectSpec的对象，就能拿到里面所有的信息。
+
+modmag计算能够捕捉属性,并且可以访问效果规格中的所有信息，而且还能捕捉属性。
+
+实现捕捉属性：
+
+1.创建变量
+
+2.实现
+
+如果我们要捕捉属性，是在游戏效果创建时捕捉还是游戏效果应用时捕捉
+
+快照捕捉（Snapshotting）就是在效果规格一创建,就马上捕捉属性，不快照的话，就是在效果应用时才去获取真正的属性值
+
+对于现在来说，都可以，所以设置`VigorDef.bSnapshot=false`
+
+```
+MMC_MaxHealth::MMC_MaxHealth()
+{
+VigorDef.AttributeToCapture = UAuraAttributeSet: : GetVigorAttribute();
+VigorDef.AttributeSource = EGameplayEffectAttributeCaptureSource: : Target;
+VigorDef.bSnapshot = false;
+
+RelevantAttributesToCapture.Add(VigorDef);
+}
+```
+
+```
+float UMMC_MaxHealth::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
+{
+// Gather tags from source and target
+const FGameplayTagContainer* SourceTags = Spec.CapturedSourceTags.GetAggregatedTags();
+const FGameplayTagContainer* TargetTags = Spec.CapturedTargetTags.GetAggregatedTags();
+
+FAggregatorEvaluateParameters EvaluationParameters;
+EvaluationParameters.SourceTags = SourceTags;
+EvaluationParameters. TargetTags = TargetTags;
+
+float Vigor = 0.f;
+GetCapturedAttributeMagnitude(VigorDef, Spec, EvaluationParameters, [&] Vigor);
+Vigor = FMath: : Max<float>(A:Vigor,B:0.f);
+
+ICombatInterface* CombatInterface = Cast<ICombatInterface>( Src:Spec.GetContext().GetSource0bject());
+const int32 PlayerLevel = CombatInterface->GetPlayerLevel();
+
+return 80.f + 2.5f * Vigor + 10.f * PlayerLevel;
+}
+```
+
+![image-20250821204219328](Aura Note.assets\image-20250821204219328.png)
+
+![image-20250821204949272](Aura Note.assets\image-20250821204949272.png)
+
+MMC的功能非常强大，但是每一个计算都要创建一个新类。
+
+## 8.11初始化重要属性
+
+我们想让生命值和魔法值都初始化成最大值，必须在最大生命值和法力值设置好后
+
+![image-20250821223258501](Aura Note.assets\image-20250821223258501.png)
+
+## 9.1属性菜单游戏计划
+
+![image-20250821223546291](Aura Note.assets\image-20250821223546291.png)
+
+## 9.2属性菜单-框架值
+
+在UI文件夹下新建一个AttributeMenu文件夹，在其中新建一个AuraUserWidget蓝图类WBP_FramedValue，
+
+打开蓝图
+
+1.拖入SizeBox，调用函数SetWidthOverride(80)，SetHeightOverride(45)，合并为为函数UpdateFrameSize。
+
+2.拖入Overlay到SizeBox上，设置水平和垂直填充。
+
+3.拖入Image到Overlay，命名为Image_Background设置水平和垂直填充，Brush-Image设置为MI_FlowingUIBG，命名函数为UpdateBackgroundBrush
+
+4.拖入Image到Overlay，命名为Image_Border设置水平和垂直填充，Brush-Image设置为Border_1.png,Draw设置成Border，Margin设置为0.5。边框挺好用的,因为我们调整尺寸盒的数值时,边框会自动拉伸成想要的样子。
+
+5.拖入Text到Overlay，命名为Image_Border，Text设置成99并居中，更改字体为Amarange，size=17，Outlinesize=1
+
+## 9.3属性菜单-文本值
+
+新建一个AuraUserWidget蓝图类WBP_TextValueRow，
+
+打开蓝图
+
+1.拖入SizeBox，调用函数SetWidthOverride(800)，SetHeightOverride(60)，合并为为函数UpdateFrameSize。
+
+2.拖入HorizontalBox，设置成水平左对齐，垂直居中对齐，Text为Attribute，Font为PirataOne，Size=32，Letter Spacing=176，OutlineSize=1，
+
+3.拖入WBP_FramedValue，设置水平居中，垂直居中，设置Fill，
+
+4.拖入Spacer，调整Size=40。
+
+5.拖入Name Slot。
+
+## 9.4属性菜单-文本按钮
+
+新建一个WBP_TextValueRow蓝图类WBP_TextValueButtonRow，
+
+打开蓝图
+
+1.拖入Overlay，
+
+2.拖入Image，命名为Image_Border，设置Brush-Image为Button_Border，Size=40x40，水平和垂直设置为居中对齐。
+
+3.拖入Button，设置为水平垂直居中对齐，在Style-Normal设置Image为Button，ImageSize设置为40x40，设置Hover为HightLight，Draw为Image，Press设置对应的Press，Disable设置成Gray，
+
+4.拖入Text，Text设置为+，设置OutlineSize为1，设置字体。
+
+## 9.5属性菜单-结构
+
+新建一个AuraUserWidget蓝图类WBP_AttributeMenu，
+
+打开蓝图
+
+1.拖入SizeBox，调用函数SetWidthOverride(80)，SetHeightOverride(45)，合并为为函数UpdateFrameSize，右键设置为WrapWithOverlay。
+
+2.拖入Overlay到SizeBox上，设置水平和垂直填充。
+
+3-0.1.拖入Image到Overlay，命名为Image_Background设置水平和垂直填充，Brush-Image设置为MI_FlowingUIBG，命名函数为UpdateBackgroundBrush
+
+3.拖入Image到Overlay，命名为Image_Border设置水平和垂直填充，Brush-Image设置为Border_Large,Draw设置成Border，Margin设置为0.5。边框挺好用的,因为我们调整尺寸盒的数值时,边框会自动拉伸成想要的样子。
+
+4.拖入WrapBox到Overlay，设置设置水平和垂直填充，
+
+5.拖入Text到WrapBox，设置文本Attributes，调整字号为36，字母间距（Letter Spacing）400，设置为Fill Empty Space，Padding设置为25，
+
+6.拖入Spacer到WrapBox，
+
+7.拖入Text到WrapBox，设置文本Primary Attibutes
+
+8.拖入Spacer到WrapBox，
+
+9.拖入WBP_TextValueButtonRow，
+
+。。。。。。
+
+拖入SizeBox至WrapBox，命名为SizeBox_Scroll，
+
+拖入ScrollBox至SizeBox，
+
+拖入10个WBP_TextValueButtonRow至ScrollBox，
+
+设置Text为Attribute就不会让文字拥挤了。
+
+## 9.6按钮组件
+
+复制Primary Attibutes Text到WrapBox
+
+将所有的Spacer-Size设置为750，20
+
+设置关闭按钮：
+
+1.拖入SizeBox到OverLay，设置Padding-Right、Bottom为25，Width=40，Height=40,
+
+2.拖入Overlay
+
+3.拖入Image，Brush-Image=Button_Border
+
+3.拖入Button，Brush-Image=Button，
+
+3.拖入Text，Text=X。
+
+由于做了很多个按钮，直接做个按钮控件。
+
+建立UI\Button文件夹，父类为AuraUserWidget，创建WBP_Button，
+
+打开蓝图，
+
+1.拖入SizeBox，Width和Height设置为40，使用蓝图函数UpdateBoxSize设置Width和Height，
+
+2.使用蓝图函数UpdateBorderBrush
+
+3.使用蓝图函数UpdateButtonBrushes，Button-SetStyle(Button,MakeButtonStyle
+
+4.UpdateText。
+
+添加宽按钮WPB_AttributeMenu
+
+## 9.8打开属性菜单 ![](Aura Note.assets/2025-08-22-11-30-47-image.png)
+
+![](Aura Note.assets/2025-08-22-11-32-10-image.png)
+
+## 9.9关闭
+
+Onclick->RemovefromParent。
+
+关闭之后Button仍处于Press状态，这时候我们需要创建一个事件分发器Event Dispatches，命名为AttributeMenuClosed，
+
+RemovefromParent会销毁控件，此时会触发一个Destruct事件，在事件中调用AttributeMenuClosed
+
+在WBP_Overlay中订阅AttributeMenuClosed
+
+![](Aura Note.assets/2025-08-22-11-42-40-image.png)
+
+AttributeMenuClosed调用Button的SetEnable。
+
+## 9.10计划显示属性数据
+
+假如收到一定属性变化的广播，就为对应属性广播一个特定委托，这样的方法确实很高效，但是在我们添加一个属性，就得重复生成对应广播。
+
+更好的方法是广播一个通用委托，属性变化时广播多条属性信息，因此,当力量属性发生变化时,控件控制器会简单地广播一个属性变化委托，我们甚至可以将它们打包成一个整洁的小结构体,然后广播给控件端
+
+![](Aura Note.assets/2025-08-22-11-55-23-image.png)
+
+![](Aura Note.assets/2025-08-22-11-58-04-image.png)
+
+![](Aura Note.assets/2025-08-22-12-01-31-image.png)
+
+![](Aura Note.assets/2025-08-22-12-02-19-image.png)
+
+## 9.11游戏标签单例
+
+NewC++->None->AuraGameplayTags
+
+删除文件中的类，定义一个结构体
+
+```cpp
+/ **
+* AuraGameplayTags
+*
+
+* Singleton containing native Gameplay Tags
+*/
+
+struct FAuraGameplayTags
+{
+public:
+static const FAuraGameplayTags& Get() { return GameplayTags;}
+//用于初始化本地游戏标签
+static voidrInitializeNativeGameplayTags();
+protected:
+
+private:
+static FAuraGameplayTags GameplayTags;
+}
+
+FAuraGameplayTags FAuraGameplayTags: : GameplayTags;
+
+void FAuraGameplayTags: : InitializeNativeGameplayTags()
+
+UGameplayTagsManager::Get().AddNativeGameplayTag(FName("Attributes.Secondary.Armor"), TagDevComment:FString(Str"Reduces damage taken, improves Block Chance"));
+```
+
+9.12Aura资产管理器
+
+New C++，添加一个AssetManager，加载主要资源的单例，命名为AuraAssetManager
+
+```cpp
+UAuraAssetManager& UAuraAssetManager :: Get()
+{
+check(GEngine);
+
+UAuraAssetManager* AuraAssetManager = Cast<UAuraAssetManager>(GEngine->AssetManager);
+return *AuraAssetManager;
+}
+void UAuraAssetManager :: StartInitialLoading()
+{
+Super: : StartInitialLoading();
+
+FAuraGameplayTags: : InitializeNativeGameplayTags();
+}
+```
+
+1.定义一个Get函数，返回一个具体类型AuraAssetManager，
+
+![](Aura Note.assets/2025-08-22-13-04-26-image.png)
+
+在FAuraGameplayTags新增字段
+
+`FGameplayTag Attributes_Secondary_Armor;`
+
+并在InitializeNativeGameplayTags函数中赋值。
+
+在AuraAbilitySystemComponent的AbilistyInfoSet函数中加上打印信息
+
+```cpp
+const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+GEngine->AddOnScreenDebugMessage(
+Key: -1,
+TimeToDisplay: 10.f,
+FColor :: Orange,
+DebugMessage: FString :: Printf( Fmt: TEXT("Tag: %s"), *GameplayTags.Attributes_Secondary_Armor.ToString())
+);
+```
+
+## 9.13本地游戏标签
+
+```cpp
+FGameplayTag Attributes_Primary_Strength;
+FGameplayTag Attributes_Primary_Intelligence;
+FGameplayTag Attributes_Primary_Resilience;
+FGameplayTag Attributes_Primary_Vigor;
+
+FGameplayTag Attributes_Secondary_Armor;
+FGameplayTag Attributes_Secondary_ArmorPenetration;
+FGameplayTag Attributes_Secondary_BlockChance;
+FGameplayTag Attributes_Secondary_CriticalHitChance;
+FGameplayTag Attributes_Secondary_CriticalHitDamage;
+FGameplayTag Attributes_Secondary_CriticalHitResistance;
+FGameplayTag Attributes_Secondary_HealthRegeneration;
+FGameplayTag Attributes_Secondary_ManaRegeneration;
+FGameplayTag Attributes_Secondary_MaxHealth;
+FGameplayTag Attributes_Secondary_MaxMana;
+```
+
+## 9.15属性信息数据资产
+
+![](Aura Note.assets/2025-08-22-13-22-39-image.png)
+
+NewC++->DataAsset，命名为AttributeInfo，放入AbilitySystem/Data文件夹中。
+
+类中新增结构体
+
+```cpp
+USTRUCT(BlueprintType)
+struct FAuraAttributeInfo
+{
+
+GENERATED_BODY()
+
+UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+FGameplayTag AttributeTag = FGameplayTag();
+
+UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+FText AttributeName = FText();
+
+UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+FText AttributeDescription = FText();
+
+UPROPERTY(BlueprintReadOnly)
+float AttributeValue = 0.f;
+}
+```
+
+```cpp
+FAuraAttributeInfo UAttributeInfo :: FindAttributeInfoForTag(const FGameplayTag& AttributeTag, bool bLogNotFound) const
+{
+for (const FAuraAttributeInfo& Info : AttributeInformation)
+{
+if (Info.AttributeTag.MatchesTagExact(AttributeTag))
+{
+return Info;
+}
+}
+if (bLogNotFound)
+
+UE_LOG(LogTemp, Error, TEXT("Can't find Info for AttributeTag [%s] on AttributeInfo [%s]."), *AttributeTag. ToString(),*GetNameSafe(this));
+
+return FAuraAttributeInfo();
+}
+```
+
+在编辑器的蓝图Data文件夹中新建DataAsset类命名为DA_AttributeInfo
+
+在类中添加
+
+![](Aura Note.assets/2025-08-22-14-08-35-image.png)
+
+## 9.15属性菜单控件控制器
+
+![](Aura Note.assets/2025-08-22-14-10-19-image.png)
+
+如果控件想自己设置控件控制器,我不想让它非得找HUD类,再问HUD类要控件控制器
+
+## 9.16Aura能力系统蓝图函数库
+
+NewC++->BlueprintFunctionLibary类，放在AbilitySystem文件夹中，命名为AuraAbilitySystemLibrary。
+
+```cpp
+UFUNCTION(BlueprintPure, Category="AuraAbilitySystemLibrary|WidgetController")
+UOverlayWidgetController* UAuraAbilitySystemLibrary :: GetOverlayWidgetController(const UObject* WorldContext0bject)
+{
+if (APlayerController* PC = UGameplayStatics :: GetPlayerController(WorldContextObject, Playerindex:0))
+{
+if (AAuraHUD* AuraHUD = Cast<AAuraHUD>( Src:PC->GetHUD()))
+{
+AAuraPlayerState* PS = PC->GetPlayerState<AAuraPlayerState>();
+UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+UAttributeSet* AS = PS->GetAttributeSet();
+const FWidgetControllerParams WidgetControllerParams(PC, PS, ASC, AS);
+return AuraHUD->GetOverlayWidgetController(WidgetControllerParams);
+}
+}
+return nullptr;
+}
+```
+
+## 9.17结构化属性菜单控件
+
+![](Aura Note.assets/2025-08-22-14-51-10-image.png)
+
+在AuraHUD中，
+
+```cpp
+UAttributeMenuWidgetController* AAuraHUD :: GetAttributeMenuWidgetController(const FWidgetControllerParams& WCParams)
+{
+if (AttributeMenuWidgetController == nullptr)
+{
+AttributeMenuWidgetController = NewObject<UAttributeMenuWidgetController>( Outer this, AttributeMenuWidgetControllerClass);
+AttributeMenuWidgetController->SetWidgetControllerParams(WCParams);
+AttributeMenuWidgetController->BindCallbacksToDependencies();
+}
+return . AttributeMenuWidgetController;
+}
+
+
+UPROPERTY()
+TObjectPtr<UAttributeMenuWidgetController> AttributeMenuWidgetController;
+
+UPROPERTY(EditAnywhere)
+TSubclass0f<UAttributeMenuWidgetController> AttributeMenuWidgetControllerClass;
+```
+
+```cpp
+//AuraAbilitySystemLibrary
+UFUNCTION(BlueprintPure, Category="AuraAbilitySystemLibrary|WidgetController")
+static UAttributeMenuWidgetController* GetAttributeMenuWidgetController(const UObject* WorldContext0bject);
+{
+if (APlayerController* PC = UGameplayStatics :: GetPlayerController(WorldContextObject, Playerindex:0))
+{
+if (AAuraHUD* AuraHUD = Cast<AAuraHUD>( Src:PC->GetHUD()))
+{
+AAuraPlayerState* PS = PC->GetPlayerState<AAuraPlayerState>();
+UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+UAttributeSet* AS = PS->GetAttributeSet();
+const FWidgetControllerParams WidgetControllerParams(PC, PS, ASC, AS);
+return AuraHUD->GetOverlayWidgetController(WidgetControllerParams);
+}
+}
+return nullptr;
+}
+```
+
+![](Aura Note.assets/2025-08-22-15-04-57-image.png)
+
+![](Aura Note.assets/2025-08-22-15-05-55-image.png)
+
+## 9.18属性信息委托
+
+```cpp
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAttributeInfoSignature, const FAuraAttributeInfo&, Info);
+
+
+UPROPERTY(BlueprintAssignable, Category="GAS|Attributes")
+FAttributeInfoSignature AttributeInfoDelegate;
+
+protect:
+UPROPERTY(EditDefaultOnly)
+TObjectPtr(UAttributeInfo) AttributeInfo;
+```
+
+```cpp
+void UAttributeMenuWidgetController::BroadcastInitialValues()
+{
+
+UAuraAttributeSet* AS = CastChecked<UAuraAttributeSet>(AttributeSet);
+
+check(AttributeInfo);
+
+FAuraAttributeInfo Info = AttributeInfo->FindAttributeInfoForTag(FAuraGameplayTags :: Get().Attributes_Primary_Strength);
+Info. AttributeValue = AS->GetStrength();
+AttributeInfoDelegate.Broadcast(Info);
+}
+```
+
+在BP_AttributeMenuWidget中设置AttributeInfo为DA_AttributeInfo。
+
+在WBP_TextValueButton中设置如下
+
+![](Aura Note.assets/2025-08-22-15-48-55-image.png)
+
+![](Aura Note.assets/2025-08-22-16-07-22-image.png)
+
+![](Aura Note.assets/2025-08-22-16-12-37-image.png)
+
+![](Aura Note.assets/2025-08-22-16-13-44-image.png)
+
+![](Aura Note.assets/2025-08-22-16-20-09-image.png)
+
+![](Aura Note.assets/2025-08-22-16-20-42-image.png)
