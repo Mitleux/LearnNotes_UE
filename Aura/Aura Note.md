@@ -1,5 +1,139 @@
 # Aura Note
 
+## 目录
+
+### 1.Introduction
+
+1个讲座·12分钟
+
+### 2.Project Creation
+
+14个讲座·2小时26分钟
+
+### 3.Intro to the Gameplay Ability System
+
+8个讲座·1小时23分钟
+
+### 4.Attributes
+
+4个讲座·1小时1分钟
+
+### 5.RPG Game UI
+
+9个讲座·2小时27分钟
+
+### 6.Gameplay Effects
+
+12个讲座·3小时31分钟
+
+### 7.Gameplay Tags
+
+16个讲座·3小时23分钟
+
+### 8.RPG Attributes
+
+11个讲座·2小时48分钟
+
+### 9.Attribute Menu
+
+21个讲座·4小时42分钟
+
+### Gameplay Abilities
+
+15个讲座·3小时56分钟
+
+### Ability Tasks
+
+15个讲座·3小时53分钟
+
+### RPG Character Classes
+
+5个讲座·1小时11分钟
+
+### Damage
+
+17个讲座·4小时32分钟
+
+### Advanced Damage Techniques
+
+14个讲座·4小时16分钟
+
+### Enemy Al
+
+14个讲座·2小时33分钟
+
+### Enemy Melee Attacks
+
+13个讲座·3小时8分钟
+
+### Enemy Ranged Attacks
+
+9个讲座·1小时15分钟
+
+### Enemy Spell Attacks
+
+5个讲座·38分钟
+
+### Enemy Finishing Touches
+
+26个讲座·4小时33分钟
+
+### Level Tweaks
+
+5个讲座·1小时54分钟
+
+### Cost and Cooldown
+
+14个讲座·3小时48分钟
+
+### Experience and Leveling Up
+
+15个讲座·3小时54分钟
+
+### Attribute Points
+
+6个讲座·1小时15分钟
+
+### Spell Menu
+
+33个讲座·9小时33分钟
+
+### Combat Tricks
+
+13个讲座·4小时4分钟
+
+### What a Shock
+
+22个讲座·6小时43分钟
+
+### Passive Spells
+
+7个讲座·1小时44分钟
+
+### Arcane Shards
+
+18个讲座·4小时39分钟
+
+### Fire Blast
+
+9个讲座·1小时59分钟
+
+### Saving Progress
+
+23个讲座·5小时45分钟
+
+### Checkpoints
+
+15个讲座·3小时42分钟
+
+### Map Entrance
+
+17个讲座·4小时53分钟
+
+### Course Conclusion
+
+2个讲座·8分钟
+
 ## 1.1项目介绍
 
 这篇笔记用来记录下从零开始开发一个自顶向下的RPG游戏。
@@ -131,7 +265,7 @@ Weapon->SetCollision(NoCollision);
 
 ## 2.8Aura玩家控制器
 
-在**玩家控制器**添加**构造函数**和BeginPlay()，在控制器中，我们想要确保这个控制器能够被复制，需要在控制器的构造函数中将设置bReplicate=true。复制就是在多人游戏服务器中某个实体发生变化的时候，其他客户端能够接收到这个变化。
+在**玩家控制器(PlayerController)**添加**构造函数**和BeginPlay()，在控制器中，我们想要确保这个控制器能够被复制，需要在控制器的构造函数中将设置bReplicate=true。复制就是在多人游戏服务器中某个实体发生变化的时候，其他客户端能够接收到这个变化。
 
 我们要在玩家控制器中添加TObjectPtr<UInputMappingContext>类型的变量。
 
@@ -142,10 +276,16 @@ TObjectPtr<UInputMappingContext> AuraContext;
 
 还需要再Aura.build.cs中添加Enhanced Input包引用。
 
+接着在源文件中添加头文件
+
+```
+#include "EnhancedInputSubsystems.h"
+```
+
 再在BeginPlay函数中添加如下代码
 
 ```
-void AAuraPlayerController: :BeginPlay()
+void AAuraPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	//如果AuraContext，任何输入都无响应，问题很严重，需要停止运行
@@ -219,7 +359,36 @@ void AAuraPlayerController::Move(const FInputActionValue& InputActionValue)
 
 ## 2.10游戏模式
 
-新建一个继承自GameModeBase的C++类，放在Game文件夹下，命名为AuraGameModeBase。
+新建一个继承自GameModeBase的C++类，放在Game文件夹下，命名为AuraGameModeBase。重新编译项目，以此C++类为父类新建一个蓝图类，命名为BP_AuraGameMode。在AuraGameMode中设置PlayerController为BP_AuraPlayerController，将Defalut Pawn Class为BP_Aura。
+
+运行游戏可以看到自己正在控制玩家角色，不过我们的摄影机目前处于中间位置，需要新建弹簧臂（SpringArm）和摄影机（Camera）才能做到自顶向下看见角色和场景。不管是在蓝图还是在C++中创建，对性能的影响都不大，不过在蓝图中创建摄像机的效率要高一些。
+
+创建好摄影机和弹簧臂，注意要使摄像机的Use Pawn Control Rotation为false。现在角色的朝向仍然不能朝着正确的方法，需要在代码中进行修改才能使其朝移动方向。
+
+```
+AAuraCharacter::AAuraCharacter()
+{
+    // 设置角色移动组件的属性，使角色的旋转朝向移动方向
+    GetCharacterMovement()->bOrientRotationToMovement = true;
+    // 设置角色的旋转速率，仅绕 Yaw 轴（偏航）的旋转速率为 400 度/秒
+    GetCharacterMovement()->RotationRate = FRotator(0.f, 400.f, 0.f);
+    // 约束角色移动到平面（通常是 XY 平面）
+    GetCharacterMovement()->bConstrainToPlane = true;
+    // 在开始时将角色对齐到平面
+    GetCharacterMovement()->bSnapToPlaneAtStart = true;
+
+    // 禁用控制器对角色 Pitch（俯仰）旋转的控制
+    bUseControllerRotationPitch = false;
+    // 禁用控制器对角色 Roll（翻滚）旋转的控制
+    bUseControllerRotationRoll = false;
+    // 禁用控制器对角色 Yaw（偏航）旋转的控制
+    bUseControllerRotationYaw = false;
+}
+```
+
+在BP_Aura中取消SpringArm对父类的Pitch，Yaw，Roll的继承。现在角色的移动正常了。
+
+我们需要角色在运动的时候才使用混合动画，空闲状态下只使用空闲动画。需要在动画蓝图中设置ShouldMove变量，如果速度大于5，则ShouldMove值为true，切换为运动状态。反之则处于空闲状态。
 
 ## 2.11敌人接口（Enemy Interface）
 
@@ -230,6 +399,61 @@ void AAuraPlayerController::Move(const FInputActionValue& InputActionValue)
 **实现如下：**
 
 新建一个Interface类，命名为EnemyInterface。在类中创建纯虚函数WighlightActor()和UnwighlightActor()，使之称为抽象类。随后使得Enemy类继承EnemyInterface类，并重写EnemyInterface类函数，否则会编译失败。
+
+在玩家控制器中添加一个检测鼠标覆盖物体的函数
+
+```
+void AAuraPlayController::CrusorTrace()
+{
+	FHitResult CrusorHitResult;
+	GetHitResultUnderCursor(ECC_Visibility,false,CrusorHitResult);
+
+	if (!CrusorHitResult.bBlockingHit)
+	{
+		return;
+	}
+
+	LastActor = ThisActor;
+	ThisActor = Cast<IEnemyInterface>(CrusorHitResult.GetActor());
+	
+	//伪代码
+	case 1:Last为空，This不为空，This高亮
+	case 2:Last为空，This空，什么都不做
+	case 3:Last不为空，This为空，Last取消高亮
+	case 4:Last不为空，This不为空，Last与This是同一个，什么都不做
+	case 3:Last不为空，This不为空，Last与This不是同一个，Last取消高亮，This高亮
+}
+```
+
+## 2.12高亮敌人
+
+在项目设置中设置
+
+![image-20250814150214796](Aura Note.assets/image-20250814150214796.png)
+
+添加一个后处理体积Post posscess volume，勾选Infinite Extend。并添加PP_Highlight材质
+
+![image-20250814150051887](Aura Note.assets/image-20250814150051887.png)
+
+在敌人类中的高亮和取消高亮的函数中新增代码
+
+```C++
+void AAuraEnemy::HighlightActor()
+{
+	bHighlightActor = true;
+	GetMesh()->SetRenderCustomDepth(true);
+	GetMesh()->SetCustomDepthStencilValue(CUSTOM_DEEPTH_RED);
+	Weapon->SetRenderCustomDepth(true);
+	Weapon->SetCustomDepthStencilValue(CUSTOM_DEEPTH_RED);
+}
+
+void AAuraEnemy::UnHighlightActor()
+{
+	bHighlightActor = false;
+	GetMesh()->SetRenderCustomDepth(false);
+	Weapon->SetRenderCustomDepth(false);
+}
+```
 
 ## **3.1Gameplay Ability System（GAS）**
 
@@ -317,7 +541,7 @@ AttributeSet = CreateDefaultSubobject<UAuraAttributeSet>("AttributeSet");
 
 为多人游戏编程一个项目，它照样能在单人模式下运行，反之则不行，所以在游戏设计之初便设计好。
 
-在PlayerState中设置为Full，而在AuraEnemy中则设置为Minmal
+在PlayerState中设置为Full或Mixed，而在AuraEnemy中则设置为Minmal
 
 ## **3.8初始化能力物体信息**
 
@@ -392,9 +616,10 @@ void UAuraAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super: : GetLifetimeReplicatedProps( [&] OutLifetimeProps);
 	//注册健康能被复制，这对于任何东西想要被复制都是必须的
 	DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Health, COND_None, REPNOTIFY_Always);
-
 }
 ```
+
+重复步骤设置MaxHealth，Mana，MaxMana。
 
 ## **4.3**
 
@@ -429,7 +654,7 @@ ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Health);
 再虚幻编辑器中新建Actor类，命名为AuraEffect，只需设置重叠函数，不需要每帧都更新，需要在构造函数声明重叠球体并在BeginPlay()中添加委托。
 
 ```
-Sphere->OnComponentBeginOverlap.AddDynamic(this, &AAuraEffectActor :: OnOverlap);
+Sphere->OnComponentBeginOverlap.AddDynamic(this, &AAuraEffectActor::OnOverlap);
 ```
 
 ```
@@ -453,6 +678,1102 @@ UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHi
 
 使用MVC模式进行游戏开发
 
+![image-20250816012254211](Aura Note.assets/image-20250816012254211.png)
+
+我们的模型永远不需要关心使用哪些控制器或组件来展示它们的数据，控制器永远不需要知道哪些组件在接收它们广播的数据
+
+![image-20250816012549177](Aura Note.assets/image-20250816012549177.png)
+
 ## **5.2Aura User Widgets and Widgets Controller**
 
-在编辑器中新建一个名字为UserWidget的C++类，命名为AuraUserWidget，再新建一个Object类命名为AuraControllerWidget。
+**首先在Aura.build.cs中导入“UMG“包**
+
+在编辑器中新建一个名字为UserWidget的C++类，放在UI/Widget文件夹中，命名为AuraUserWidget，再新建一个Object类，放在UI/WidgetController中，命名为AuraWidgetController。 
+
+在AuraUserWidget类中新增public字段
+
+```
+public:
+UFUNCTION(BlueprintCallable)
+void SetWidgetController(UObject* InWidgetController);
+UPROPERTY(BlueprintReadOnly)
+TObjectPtr<UObject> WidgetController;
+protected:
+UFUNCTION(BlueprintImplementableEvent)
+void WidgetControllerSet();
+```
+
+```
+void UAuraUserWidget::SetWidgetController(UObject* InWidgetController)
+{
+WidgetController = InWidgetController;
+WidgetControllerSet();
+}
+```
+
+在AuraWidgetController类中
+
+```
+protected:
+
+UPROPERTY(BlueprintReadOnly, Category="WidgetController")
+TObjectPtr<APlayerController> PlayerController;
+
+UPROPERTY(BlueprintReadOnly, Category="WidgetController")
+TObjectPtr<APlayerState> PlayerState;
+
+UPROPERTY(BlueprintReadOnly, Category="WidgetController")
+T0bjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+
+UPROPERTY(BlueprintReadOnly, Category="WidgetController")
+T0bjectPtr<UAttributeSet> AttributeSet;
+```
+
+## 5.3全局过程条
+
+在Content/Blueprints文件夹新建UI/ProgressBar文件夹，再新建一个继承自AuraUserWidget的类，命名为BP_GlobeProgressBar。
+
+双击打开类并添加一个SizeBox，将Full Screen改成Desired，勾选IsVarible
+
+![image-20250816140943316](Aura Note.assets/image-20250816140943316.png)
+
+修改BoxWidth可以改变SizeBox的大小。
+
+为了蓝图更加整洁有序，选中蓝图节点，右键选中Collapse to Function可以将这些节点变成一个函数。
+
+新增Overlay附加在SizeBox上，新增Image附加在Overlay上。
+
+![image-20250816141443271](Aura Note.assets/image-20250816141443271.png)
+
+![image-20250816142058022](Aura Note.assets/image-20250816142058022.png)
+
+这些设置好后都可以将其变为一个函数。
+
+![image-20250816142340719](Aura Note.assets/image-20250816142340719.png)
+
+---
+
+添加以下组件并设置为变量
+
+```
+[BP_GlobeProgressBar]
+|--SizeBox_Root
+   |--Overlay_Root
+      |--Image_BackGround
+      |--ProgressBar_Globe
+      |--Image_Glass
+```
+
+![image-20250816211015692](Aura Note.assets/image-20250816211015692.png)
+
+## 5.4全局血量
+
+将WBP_GlobeProgressBar作为基础类，创建WBP_HealthGlobe和WBP_ManaGlobe。
+
+![image-20250816222157069](Aura Note.assets/image-20250816222157069.png)
+
+## 5.5AuraHUD
+
+新建一个C++类，继承自HUD类，命名为AuraHUD，放在UI\HUD中。
+
+在类中添加如下代码
+
+```
+public:
+
+UPROPERTY()
+TObjectPtr<UAuraUserWidget> OverlayWidget;
+
+protected:
+virtual void BeginPlay()| override;
+
+private:
+
+UPROPERTY(EditAnywhere)
+TSubclassOf<UAuraUserWidget> OverlayWidgetClass;
+```
+
+```
+void AAuraHUD :: BeginPlay()
+{
+Super::BeginPlay();
+
+UUserWidget* Widget = CreateWidget<UUserWidget>( GetWorld(), OverlayWidgetClass);
+Widget->AddToViewport();
+}
+```
+
+新建一个BP_AuraHUD，在类中设置OverlayWidgetClass为WBP_Overlay。
+
+再在BP_AuraGameMode类中设置HUD类为BP_AuraHUD.
+
+## 5.6OverlayWidgetController
+
+在AuraWidgetController中使用结构体利于传递参数。
+
+```
+USTRUCT(BlueprintType)
+struct FWidgetControllerParams
+{
+GENERATED_BODY()
+
+FWidgetControllerParams() {}
+FWidgetControllerParams(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS)
+: PlayerController([&]PC), PlayerState([&]PS), AbilitySystemComponent([&]ASC), AttributeSet( [&]AS) {}
+
+UPROPERTY(EditAnywhere, BlueprintReadWrite)
+TObjectPtr<APlayerController> PlayerController = nullptr;
+
+UPROPERTY(EditAnywhere, BlueprintReadWrite)
+TObjectPtr<APlayerState> PlayerState = nullptr;
+
+UPROPERTY(EditAnywhere, BlueprintReadWrite)
+TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent = nullptr;
+
+UPROPERTY(EditAnywhere, BlueprintReadWrite)
+TObjectPtr<UAttributeSet> AttributeSet = nullptr;
+};
+```
+
+在类中新增函数
+
+```
+public:
+UFUNCTION(BlueprintCallable)
+void SetWidgetControllerParams(const FWidgetControllerParams& WCParams){
+PlayerController = WCParams.PlayerController
+PlayerState = WCParams.PlayerState
+AbilitySystemComponent = WCParams.AbilitySystemComponent
+AttributeSet = WCParams.AttributeSet
+};
+```
+
+将AuraWidgetController类作为基类,新增一个OverlayWidgetController类。
+
+在AuraHUD中新增以下代码
+
+```
+public:
+
+UPROPERTY()
+TObjectPtr<UAuraUserWidget> OverlayWidget;
+
+UOverlayWidgetController* GetOverlayWidgetController(const FWidgetControllerParams& WCParams)
+{
+if (OverlayWidgetController == nullptr)
+{
+	OverlayWidgetController = NewQbject<UOverlayWidgetController>(Outer:this, OverlayWidgetControllerClass);
+	OverlayWidgetController->SetWidgetControllerParams (WCParams);
+
+	return OverlayWidgetController;
+}
+return OverlayWidgetController;
+};
+
+//复制BeginPlay中代码，粘贴到Initoverlay中
+//initoverlay会负责创建控件控制器、控件,设置控件的控制器,并把控件添加到界面上
+void InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS)
+{
+checkf(OverlayWidgetClass, TEXT("Overlay Widget Class uninitialized, please fill out BP_AuraHUD"));
+checkf(OverlayWidgetControllerClass, TEXT("Overlay Widget Controller Class uninitialized, please fill out BP_AuraHUD"));
+
+UUserWidget* Widget = CreateWidget<UUserWidget>( OwningObject: GetWorld(), OverlayWidgetClass);
+OverlayWidget = Cast<UAuraUserWidget>(Widget);
+
+const FWidgetControllerParams WidgetControllerParams(PC, PS, ASC, AS);
+UOverlayWidgetController* WidgetController = GetOverlayWidgetController(WidgetControllerParams);
+
+OverlayWidget->SetWidgetController(WidgetController);
+
+Widget->AddToViewport();
+}
+
+
+private:
+
+UPROPERTY()
+TObjectPtr<UOverlayWidgetController> OverlayWidgetController;
+
+UPROPERTY(EditAnyWhere)
+TSubclassOf<UOverlayWidgetController> OverlayWidgetControllerClass;
+```
+
+在AuraCharacter中的InitAbilityActorInfo中添加以下代码，此时AbilitySystemComponent和AttributeSet已完成初始化。
+
+```
+if (AAuraPlayerController* AuraPlayerController = Cast<AAuraPlayerController>(SrcGetController()))
+{
+if (AAuraHUD* AuraHUD = Cast<AAuraHUD>( Src:AuraPlayerController->GetHUD()))
+{
+AuraHUD->InitOverlay(AuraPlayerController, AuraPlayerState, AbilitySystemComponent, AttributeSet);
+}
+}
+```
+
+很多新手开发者都搞不清楚,什么时候该检查空指针,什么时候该用断言,比如check,
+
+服务器拥有所有玩家的玩家控制器,但每个玩家只拥有自己的那个玩家控制器
+
+所以在客户端这台机器上,控制自己角色的那个玩家控制器才是有效的
+
+但对于客户端上那些不是本地控制的其他角色来说,是没有有效玩家控制器的
+
+比如说,在一个三人游戏中,如果你是客户端玩家,你自己的玩家控制器就是有效的,其他玩家控制器是无效的
+
+在这里有可能获得玩家控制器为空，但我们不希望在此处崩溃，所以使用IF
+
+## 5.7BoradcastInitialValues
+
+在AuraWidgetController中定义虚函数。
+
+```
+virtual void BoradcastInitialValues();
+```
+
+这里开始使用动态多播委托。可以在控件蓝图中，为它们绑定事件，
+因为可能有多个蓝图,多个控件蓝图想绑定这些委托以便进行更新
+
+```
+//通过一个数值，广播生命值的变化。
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealtChangedSignature, float, NewHealth);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxHealtChangedSignature, float, NewMaxHealth);
+```
+
+在OverlayWidgetController类中新增变量
+
+```
+UPROPERTY(BlueprintAssignable,Category="GAS|Attributes")
+FOnHealtChangedSignature OnHealthChanged;
+
+UPROPERTY(BlueprintAssignable,Category="GAS|Attributes")
+FOnMaxHealtChangedSignature OnMaxHealthChanged;
+```
+
+在OverlayWidgetController中重写虚函数
+
+```
+void UOverlayWidgetController::BoradcastInitialValues()
+{
+	const UAuraAttributeSet* AuraAttributeSet = CastChecked<UAuraAttributeSet>(AttributeSet);
+
+	//监听生命变化，并广播
+	OnHealthChanged.Broadcast(AuraAttributeSet->GetHealth());
+	OnMaxHealthChanged.Broadcast(AuraAttributeSet->GetMaxHealth());
+}
+```
+
+最后在InitOverlay函数中新增`WidgetController->BoradcastInitialValues();`
+
+```
+OverlayWidget->SetWidgetController(WidgetController);
+/*begin*/
+WidgetController->BoradcastInitialValues();
+/*end*/
+Widget->AddToViewport();
+```
+
+在WBP_GlobeProgressBar中新增函数
+
+![image-20250817012434032](Aura Note.assets/image-20250817012434032.png)
+
+在WBP_Overlay中设置控制器
+
+![image-20250817011808555](Aura Note.assets/image-20250817011808555.png)
+
+接着在WBP_HealthGlobe中设置小部件控制器
+
+![image-20250817012023352](Aura Note.assets/image-20250817012023352.png)
+
+![image-20250817012335279](Aura Note.assets/image-20250817012335279.png)
+
+## 5.8响应属性改变
+
+在UOverlayWidgetController类中实现，AuraAttributeSet->GetHealthAttribute()是属性，&UOverlayWidgetController::HealthChanged具体的回调函数
+
+```
+void UOverlayWidgetController::BindCallbacksToDependencies()
+{
+	const UAuraAttributeSet* AuraAttributeSet = CastChecked<UAuraAttributeSet>(AttributeSet);
+
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+		AuraAttributeSet->GetHealthAttribute()).AddUObject(this, &UOverlayWidgetController::HealthChanged);
+		
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+		AuraAttributeSet->GetHealthAttribute()).AddUObject(this, &UOverlayWidgetController::MaxHealthChanged);
+}
+
+void UOverlayWidgetController :: HealthChanged(const FOnAttributeChangeData& Data) const
+{
+	OnHealthChanged.Broadcast(Data.NewValue);
+}
+void UOverlayWidgetController :: MaxHealthChanged(const FOnAttributeChangeData& Data) const
+{
+	OnMaxHealthchanged.Broadcast(Data.NewValue);
+}
+```
+
+现在每当Health发生变化时，这些委托会触发广播，调用回调函数HealthChanged。
+
+## 5.9根据前面的内容实现魔法值变化
+
+## 6.1游戏效果
+
+![image-20250817115910405](Aura Note.assets/image-20250817115910405.png)
+
+如果需要复杂的属性调整，应该自定义执行或数值计算，而不是通过派生子类实现游戏效果。
+
+![image-20250817120232527](Aura Note.assets/image-20250817120232527.png)
+
+## 6.2改进游戏效果类
+
+我们希望设计在编辑器中设置瞬时效果的碰撞形状和具体效果，所以我们把AuraEffectActor中前期设置好的先删除，看似是削减了功能，实则让EffectActor更加灵活多变了。
+
+将一个SceneComponent作为根组件
+
+```
+SetRootComponent(CreateDefaultSubobject<USceneComponent>("SceneRoot"));
+```
+
+```
+protected:
+UPROPERTY(EditAnywhere, Category = "Applied Effects")
+TSubclassOf<UGameplayEffect> InstantGameplayEffectClass;
+```
+
+```
+UFUNCTION(BlueprintCallable)
+void AAuraEffectActor::ApplyEffectToTarget(AActor* Target, TSubclassOf<UGameplayEffect> GameplayEffectClass)
+{
+UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Target);
+if (TargetASC == nullptr) return;
+
+check(GameplayEffectClass);
+FGameplayEffectContextHandle EffectContextHandle = TargetASC->MakeEffectContext();
+EffectContextHandle.AddSourceObject(this);
+FGameplayEffectSpecHandle EffectSpecHandle = TargetASC->MakeOutgoingSpec(GameplayEffectClass, Level: 1.f, EffectContextHandle);
+TargetASC->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
+
+}
+
+```
+
+## 6.3瞬时效果
+
+需要先创建UGameplayEffect蓝图类，后在EffectActor类中的InstantGameplayEffectClass字段指定具体类。
+
+![image-20250817175037608](Aura Note.assets/image-20250817175037608.png)
+
+![image-20250817174920359](Aura Note.assets/image-20250817174920359.png)
+
+制作ManaPotion时选择材质，在Content中选中材质后点击小箭头。
+
+![image-20250817175252460](Aura Note.assets/image-20250817175252460.png)
+
+## 6.4持续游戏效果
+
+首先在蓝图中实现ApplyEffectToTarget，接着完成BP_HealthCrystal的制作。
+
+![image-20250817212943261](Aura Note.assets/image-20250817212943261.png)
+
+## 6.5周期效果
+
+![image-20250818012226195](Aura Note.assets/image-20250818012226195.png)
+
+![image-20250818012336394](Aura Note.assets/image-20250818012336394.png)
+
+![image-20250818012436705](Aura Note.assets/image-20250818012436705.png)
+
+Period设置为0，不会触发周期游戏效果，设置为1则每一秒触发一次。
+
+Execute Periodic Effect on Application勾选后会立即触发，取消勾选会在一个周期后生效。
+
+![image-20250818013156772](Aura Note.assets/image-20250818013156772.png)
+
+![image-20250818013130467](Aura Note.assets/image-20250818013130467.png)
+
+![image-20250818013542694](Aura Note.assets/image-20250818013542694.png)
+
+## 6.6效果栈
+
+![image-20250818014038154](Aura Note.assets/image-20250818014038154.png)
+
+![image-20250818014121079](Aura Note.assets/image-20250818014121079.png)Stack Duration Refresh Policy 
+
+* No Refresh
+
+* Refresh on Successful Application
+
+Stack Period Refresh Policy
+
+* Refresh on Successful Application
+* Never Reset
+
+#### 1. Stack Duration Refresh Policy (堆叠持续时间刷新策略)
+
+这个策略决定了当一个堆叠效果被重新应用时，其持续时间如何更新：
+
+**Refresh on Successful Application (应用成功时刷新)**
+
+每次成功应用效果时，重置整个堆叠的持续时间
+
+适用于需要保持持续时间的buff/debuff
+
+**Never Refresh (从不刷新)**
+
+持续时间不受后续应用影响
+
+每个堆叠实例保持其原始持续时间
+
+**Reset on Successful Application (应用成功时重置)**
+
+重置所有堆叠实例的持续时间
+
+类似于刷新，但行为更统一
+
+#### 2. Stack Period Reset Policy (堆叠周期重置策略)
+
+控制周期性效果(Periodic Effect)的计时器行为：
+
+**Reset on Successful Application (应用成功时重置)**
+
+每次应用新堆叠时重置周期计时器
+
+确保所有堆叠同步触发周期效果
+
+**Never Reset (从不重置)**
+
+周期计时器不受新堆叠影响
+
+每个堆叠实例保持自己的周期计时
+
+#### 3. Stack Expiration Policy (堆叠过期策略)
+
+决定当堆叠效果过期时如何处理各个堆叠实例：
+
+**Remove Single Stack and Refresh Duration (移除单个堆叠并刷新持续时间)**
+
+每次过期只移除一个堆叠实例
+
+剩余堆叠的持续时间被刷新
+
+**Clear Entire Stack (清除整个堆叠)**
+
+过期时移除所有堆叠实例
+
+适用于"全有或全无"类型的效果
+
+**Refresh Duration (刷新持续时间)**
+
+过期时刷新整个堆叠的持续时间
+
+但不移除任何堆叠实例
+
+## 6.7无限游戏效果
+
+![image-20250818020028420](Aura Note.assets/image-20250818020028420.png)
+
+```
+UENUM(BlueprintType)
+enum class EEffectApplicationPolicy
+{
+	ApplyOnOverlap,
+	ApplyOnEndOverlap,
+	DoNotApply
+}
+UENUM(BlueprintType)
+enum class EEffectRemovalPolicy
+{
+RemoveOnEndOverlap,
+DoNotRemove
+}
+UCLASS()
+class AURA_API AAuraEffectActor : public AActor
+{
+
+public:
+AAuraEffectActor();
+
+protected:
+virtual void BeginPlay() override;
+
+UFUNCTION(BlueprintCallable)
+void ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGameplayEffect> GameplayEffectClass);
+
+UFUNCTION(BlueprintCallable)
+void OnOverlap(AActor* TargetActor); 0 blueprint usages
+
+UFUNCTION(BlueprintCallable)
+void OnEndOverlap(AActor* TargetActor);
+
+UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Effects")
+bool bDestroyOnEffectRemoval = false;
+
+UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Effects")
+TSubclassOf<UGameplayEffect> InstantGameplayEffectClass;
+
+UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Effects")
+EEffectApplicationPolicy InstantEffectApplicationPolicy = EEffectApplicationPolicy::DoNotApply;
+
+UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Effects")
+TSubclassOf<UGameplayEffect> DurationGameplayEffectClass;
+
+UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Effects")
+EEffectApplicationPolicy DurationEffectApplicationPolicy = EEffectApplicationPolicy::DoNotApply;
+
+UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Effects")
+TSubclassOf<UGameplayEffect> InfiniteGameplayEffectClass;
+
+UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Effects")
+EEffectApplicationPolicy InfiniteEffectApplicationPolicy = EEffectApplicationPolicy::DoNotApply;
+
+UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Effects")
+EEffectRemovalPolicy InfiniteEffectRemovalPolicy = EEffectRemovalPolicy: :RemoveOnEndOverlap;
+}
+```
+
+## 6.8无限游戏效果的应用和移除
+
+计划移除无限游戏效果，如下操作
+
+```
+void AAuraEffectActor :: ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGameplayEffect> GameplayEffectClass)
+{
+UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary :: GetAbilitySystemComponent(TargetActor);
+if (TargetASC == nullptr) return;
+
+check(GameplayEffectClass);
+FGameplayEffectContextHandle EffectContextHandle = TargetASC->MakeEffectContext();
+EffectContextHandle.AddSource0bject(this);
+const FGameplayEffectSpecHandle EffectSpecHandle = TargetASC->MakeOutgoingSpec(GameplayEffectClass, Level:1.f, EffectContextHandle);
+const FActiveGameplayEffectHandle ActiveEffectHandle = TargetASC->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
+
+const bool bIsInfinite = EffectSpecHandle.Data.Get()->Def.Get()->DurationPolicy == EGameplayEffectDurationType :: Infinite;
+if (bIsInfinite)
+{
+ActiveEffectHandles.Add(ActiveEffectHandle, TargetASC);
+}
+}
+```
+
+如果不打算移除无限游戏效果，就没有必要保存对应的句柄
+
+```
+if (bIsInfinite && InfiniteEffectRemovalPolicy == EEffectRemovalPolicy::RemoveOnEndOverlap)
+{
+	ActiveEffectHandles.Add(ActiveEffectHandle, TargetASC);
+}
+```
+
+```
+void AAuraEffectActor: : OnOverlap(AActor* TargetActor)
+{
+if (InstantEffectApplicationPolicy == EEffectApplicationPolicy :: ApplyOnOverlap)
+
+ApplyEffectToTarget(TargetActor, InstantGameplayEffectClass);
+
+if (DurationEffectApplicationPolicy == EEffectApplicationPolicy :: ApplyOnOverlap)
+
+ApplyEffectToTarget(TargetActor, DurationGameplayEffectClass);
+
+if (InfiniteEffectApplicationPolicy == EEffectApplicationPolicy :: ApplyOnOverlap)
+ApplyEffectToTarget(TargetActor, InfiniteGameplayEffectClass);
+{
+```
+
+```
+void AAuraEffectActor: : EndOverlap(AActor* TargetActor)
+{
+if (InstantEffectApplicationPolicy == EEffectApplicationPolicy :: ApplyOnOverlap)
+
+ApplyEffectToTarget(TargetActor, InstantGameplayEffectClass);
+
+if (DurationEffectApplicationPolicy == EEffectApplicationPolicy :: ApplyOnOverlap)
+
+ApplyEffectToTarget(TargetActor, DurationGameplayEffectClass);
+
+if (InfiniteEffectApplicationPolicy == EEffectApplicationPolicy :: ApplyOnOverlap)
+ApplyEffectToTarget(TargetActor, InfiniteGameplayEffectClass);
+{
+```
+
+在遍历Map时找到对应的游戏效果句柄，然后移除对应效果。
+
+接着删除Map中保留的键值对，但是不能在遍历时删除，因为这样极容易导致程序崩溃。
+
+```
+if (InfiniteEffectRemovalPolicy == EEffectRemovalPolicy :: RemoveOnEndOverlap)
+{
+UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
+if (!IsValid(TargetASC)) return;
+
+TArray<FActiveGameplayEffectHandle> HandlesToRemove;
+for (TTuple<FActiveGameplayEffectHandle, UAbilitySystemComponent*> HandlePair : ActiveEffectHandles)
+{
+if (TargetASC == HandlePair.Value)
+
+TargetASC->RemoveActiveGameplayEffect(HandlePair.Key);
+HandlesToRemove.Add(HandlePair.Key);
+
+}
+
+for (FActiveGameplayEffectHandle& Handle : HandlesToRemove)
+{
+ActiveEffectHandles.FindAndRemoveChecked(Handle);
+}
+}
+```
+
+`TargetASC->RemoveActiveGameplayEffect(HandlePair.Key);`函数中第二个参数是一次性移除效果个数。
+
+![image-20250818152701926](Aura Note.assets/image-20250818152701926.png)
+
+## 6.9PreAttributeChange
+
+在AuraAttributeSet中增加以下函数。
+
+````
+virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& MewValue) override
+{
+Super :: PreAttributeChange(Attribute, [&] NewValue);
+
+if (Attribute == GetHealthAttribute())
+
+NewValue = FMath :: Clamp(XNewValue, Min:0.f, GetMaxHealth());
+
+if (Attribute == GetManaAttribute())
+
+NewValue = FMath :: Clamp(x:NewValue, Min:0.f, GetMaxMana());
+}
+````
+
+![image-20250818160507751](Aura Note.assets/image-20250818160507751.png)
+
+![image-20250818160217220](Aura Note.assets/image-20250818160217220.png)
+
+![image-20250818160235085](Aura Note.assets/image-20250818160235085.png)
+
+![image-20250818160817753](Aura Note.assets/image-20250818160817753.png)
+
+## 6.11PostGameplayEffectExecute
+
+![image-20250818161327817](Aura Note.assets/image-20250818161327817.png)
+
+![image-20250818172152871](Aura Note.assets/image-20250818172152871.png)
+
+```
+USTRUCT()
+struct FEffectProperties
+
+GENERATED_BODY()
+
+FEffectProperties(){}
+
+FGameplayEffectContextHandle EffectContextHandle;
+
+UPROPERTY()
+UAbilitySystemComponent* SourceASC = nullptr;
+
+UPROPERTY()
+AActor* SourceAvatarActor = nullptr;
+
+UPROPERTY()
+AController* SourceController = nullptr;
+
+UPROPERTY()
+ACharacter* SourceCharacter = nullptr;
+
+UPROPERTY()
+UAbilitySystemComponent* TargetASC = nullptr;
+
+UPROPERTY()
+AActor* TargetAvatarActor = nullptr;
+......
+```
+
+精简一下，新增一个函数,并将以下变量替换成结构体中的变量。
+
+```
+void UAuraAttributeSet :: SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props){
+const FGameplayEffectContextHandle EffectContextHandle = Data.EffectSpec.GetContext();
+const UAbilitySystemComponent* SourceASC = EffectContextHandle.GetOriginalInstigatorAbilitySystemComponent();
+
+if (IsValid(SourceASC) && SourceASC->AbilityActorInfo.IsValid() && SourceASC->AbilityActorInfo->AvatarActor.IsValid())
+{
+AActor* SourceAvatarActor = SourceASC->AbilityActorInfo->AvatarActor.Get();
+const AController* SourceController = SourceASC->AbilityActorInfo->PlayerController.Get();
+if (SourceController == nullptr && SourceAvatarActor != nullptr)
+{
+if (const APawn* Pawn= Cast<APawn>(SourceAvatarActor))
+
+SourceController = Pawn->GetController();
+}
+if (SourceController)
+{
+ACharacter* SourceCharacter = Cast<ACharacter>(SrcSourceController->GetPawn());
+}
+if (Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
+{
+AActor* TargetActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
+AController* TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
+ACharacter* TargetCharacter = Cast<ACharacter>(TargetActor);
+UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary :: GetAbilitySystemComponent(TargetActor);
+}
+}
+```
+
+## 6.12曲线表
+
+在Miscellaneous中有Curve Table
+
+![image-20250818171857293](Aura Note.assets/image-20250818171857293.png)
+
+## 7.1游戏标签
+
+![image-20250818213615721](Aura Note.assets/image-20250818213615721.png)
+
+## 7.2在编辑器中创建游戏标签
+
+游戏标签的创建有几种方法
+
+1.在项目的设置中有一个游戏标签的菜单，默认情况下有一个GamePlayCue，上面还有添加新游戏标签和游戏标签源，添加源可以指定一个ini文件，标签用来表示各种事物，包括我们的属性。
+
+比如添加Health标签
+
+Attributes.Vital.Health
+
+玩家死亡前承受的最大伤害量。
+
+按下回车，下方多出了一个Attributes标签，还可以展开和添加子标签
+
+2.在项目的Config目录下的DefaultGameplayTags.ini文件中添加。
+
+## 7.3从数据表中创建游戏标签
+
+新建文件夹Blueprints/AbilitySystem/GametTags，在其中新建Data Table蓝图类，选择行结构为GameplayTagTableRow，命名为DT_PrimaryAttributeDataTable，这样我们就可以创建Tag了。
+
+创建好后回到项目设置中在游戏标签表list中新增一个设置成刚才创建好的DataTable就好了。
+
+## 7.4应用游戏标签到游戏效果上
+
+给游戏效果资源添加标签，并不会让被这个效果击中的角色获得该标签。
+
+GameplayEffectAssetTag
+
+Combined Tags
+
+Added
+
+Removed
+
+GrantedTags
+
+Combined Tags
+
+Added
+
+Removed
+
+GrantedBlockedAbilityTags
+
+Ongoing Tag Requirements
+
+Application Tag Requirements
+
+Removal Tag Requirements
+
+Remove Gameplay Effect Query
+
+Remove Gameplay Effects with Tags
+
+## 7.6游戏效果委托
+
+```
+/ ** Delegate for when an effect is applied */
+DECLARE_MULTICAST_DELEGATE_ThreParams(FOnGameplayEffectAppliedDelegate, UAbilitySystemComponent*, const FGameplayEffectSpec&, FActiveGameplayEffectHandle)];
+
+
+
+/ ** Called on server whenever a GE is applied to self. This includes instant and duration based GEs. */
+FOnGameplayEffectAppliedDelegate OnGameplayEffectAppliedDelegateToSelf
+```
+
+在角色中
+
+```
+//InitAbilityActorInfo函数中
+AuraPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(InOwnerActor.AuraPlayerState, InAvatarActor.this);
+Cast<UAuraAbilitySystemComponent>(Src:AuraPlayerState->GetAbilitySystemComponent())->AbilityActorInfoSet();
+```
+
+在UAuraAbilitySystemComponent类中实现函数AbilityActorInfoSet()
+
+```
+void UAuraAbilitySystemComponent::AbilityActorInfoSet()
+{
+OnGameplayEffectAppliedDelegateToSelf.AddU0bject(this, &UAuraAbilitySystemComponent::EffectApplied);
+}
+```
+
+## 7.7获得所有资产标签
+
+实现EffectApplied函数
+
+```
+void UAuraAbilitySystemComponent::EffectApplied(UAbilitySystemComponent* AbilitySystemComponent,const FGameplayEffectSpec& EffectSpec, FActiveGameplayEffectHandle ActiveEffectHandle)
+{
+
+FGameplayTagContainer TagContainer;
+EffectSpec.GetAllAssetTags([&]TagContainer);
+for (const FGameplayTag& Tag : TagContainer)
+
+//TODO: Broadcast the tag to the Widget Controller
+const FString Msg = FString :: Printf(Fmt TEXT("GE Tag: %s"), *Tag.ToString());
+GEngine->AddOnScreenDebugMessage( Key :- 1, TimeToDisplay:8.f,FColor :: Blue,Msg);
+}
+```
+
+## 7.8广播游戏效果标签
+
+在类中声明一个委托，在函数EffectApplied中广播委托，在OverlayWidgetController中绑定匿名函数实现相应功能
+
+```
+DECLARE_MULTICAST_DELEGATE_OneParam(FEffectAssetTags, const FGameplayTagContainer& /*AssetTags*/);
+
+public:
+FEffectAssetTags EffectAssetTags;
+
+EffectAssetTags.Boardcast(TagContainer);
+
+
+//在OverlayWidgetController绑定回调依赖中调用
+Cast<UAuraAbilitySystemComponent>(AbilitySystemComponent)->EffectAssetTags.AddLambda(
+[](const FGameplayTagContainer& AssetTags) ->void
+
+for (const FGameplayTag& Tag : AssetTags)
+{
+const FString Msg = FString :: Printf(Fmt:TEXT("GE Tag: %s"), *Tag.ToString());
+GEngine->AddOnScreenDebugMessage( Key :- 1,TimeToDisplay:8.f,FColor :: Blue, Msg);
+}
+)
+```
+
+## 7.9UI数据表
+
+在OverlayWidgetController中新增结构体
+
+```
+USTRUCT(BlueprintType)
+struct FUIWidgetRow : public FTableRowBase
+{
+GENERATED_BODY()
+
+UPROPERTY(EditAnywhere, BlueprintReadOnly)
+FGameplayTag MessageTag = FGameplayTag();
+
+UPROPERTY(EditAnywhere, BlueprintReadOnly)
+FText Message = FText();
+
+UPROPERTY(EditAnywhere, BlueprintReadOnly)
+TSubclassOf<UAuraUserWidget> MessageWidget;
+
+UPROPERTY(EditAnywhere, BlueprintReadOnly)
+UTexture2D* Image = nullptr;
+
+};
+```
+
+新建DataTable，选中结构体为FUIWidgetRow，命名为DT_MessageWidgetData。
+
+新增数据标签
+
+Message
+
+* HealthCrystal
+* HealthPotion
+* ManaCrystal
+* ManaPotion
+
+在OverlayWidgetController类中新增字段
+
+```
+UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget Data")
+TObjectPtr<UDataTable> MessageWidgetDataTable; 
+```
+
+在蓝图中设置为DT_MessageWidgetData
+
+## 7.10从数据表中获取数据
+
+![image-20250819022127058](Aura Note.assets/image-20250819022127058.png)
+
+写一个函数，能返回任何类型的行，任何种类的数据表行。
+
+```
+template<typename T>
+T* GetDataTableRowByTag(UDataTable* DataTable, const FGameplayTag& Tag)
+{
+return DataTable->FindRow<T>(Tag.GetTagName(), TEXT(""));
+};
+```
+
+```
+Cast<UAuraAbilitySystemComponent>(AbilitySystemComponent)->EffectAssetTags. AddLambda(
+InFunctor: [this](const FGameplayTagContainer& AssetTags) ->void
+{
+for (const FGameplayTag& Tag : AssetTags)
+{
+const FString Msg = FString :: Printf(FmtTEXT("GE Tag: %s"), *Tag.ToString());
+GEngine->AddOnScreenDebugMessage( Key :- 1, TimeToDisplay:8.f, FColor :: Blue, Msg);
+FUIWidgetRow* Row = GetDataTableRowByTag<FUIWidgetRow>(MessageWidgetDataTable, Tag);
+}
+}
+```
+
+## 7.11广播数据表行
+
+我们用一个委托来处理所有消息,毕竟只需广播一行数据就够了
+
+```
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMessageWidgetRowSignature, FUIWidgetRow, Row);
+
+UPROPERTY(BlueprintAssignable, Category="GAS|Messages")
+FMessageWidgetRowSignature MessageWidgetRowDelegate;
+```
+
+在匿名函数中修改如下
+
+```
+for (const FGameplayTag& Tag : AssetTags)
+{
+// For example, say that Tag = Message. HealthPotion
+// "Message.HealthPotion".MatchesTag("Message") will return True, "Message".MatchesTag("Message.HealthPotion") will return False
+FGameplayTag MessageTag = FGameplayTag :: RequestGameplayTag(FName("Message"));
+
+if (Tag.MatchesTag(MessageTag))
+{
+const FUIWidgetRow* Row = GetDataTableRowByTag<FUIWidgetRow>(MessageWidgetDataTable, Tag);
+MessageWidgetRowDelegate.Broadcast(*Row);
+}
+}
+```
+
+![image-20250819024503743](Aura Note.assets/image-20250819024503743.png)
+
+![image-20250819024635263](Aura Note.assets/image-20250819024635263.png)
+
+![image-20250819024717401](Aura Note.assets/image-20250819024717401.png)
+
+## 7.12消息
+
+新建一个文件夹Subwidget
+
+![image-20250819024936666](Aura Note.assets/image-20250819024936666.png)
+
+在文件夹中新建一个类继承自AuraWidget类，命名为WBP_EffectMessage
+
+![image-20250819025214550](Aura Note.assets/image-20250819025214550.png)
+
+在蓝图类中新建一个函数SetImageAndText，设置参数类型为Texture2d和Text
+
+![image-20250819025618550](Aura Note.assets/image-20250819025618550.png)
+
+显示到屏幕上
+
+![image-20250819025928694](Aura Note.assets/image-20250819025928694.png)
+
+设置显示位置
+
+![image-20250819030129285](Aura Note.assets/image-20250819030129285.png)
+
+## 7.13
+
+检车SetImageAndText中的Image是否有效
+
+接下来创建动画
+
+![image-20250819030428568](Aura Note.assets/image-20250819030428568.png)
+
+![image-20250819030806045](Aura Note.assets/image-20250819030806045.png)
+
+![image-20250819030827671](Aura Note.assets/image-20250819030827671.png)
+
+## 7.14使用Lambda替换回调函数
+
+![image-20250819031131757](Aura Note.assets/image-20250819031131757.png)
+
+定义一个委托即可
+
+```
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedSignature, float, NewValue);
+```
+
+在损坏的节点中右键选择Refresh Node即可修复损坏的节点
+
+## 7.15幽灵球
+
+![image-20250819131155813](Aura Note.assets/image-20250819131155813.png)
+
+幽灵球需平滑跟随生命/人球变化并保持进度插值
+
+## 7.16数值限制
+
+将生命恢复至100后再次拾取生命药水，接着在火焰中不会扣除血量。
+
+![image-20250819151653138](Aura Note.assets/image-20250819151653138.png)
+
+![image-20250819151713635](Aura Note.assets/image-20250819151713635.png)
+
+![image-20250819151737997](Aura Note.assets/image-20250819151737997.png)
+
+PreAttributeChange这个函数只是对查询到的修饰符返回值进行夹值处理，
+任何其他对修饰符的查询,都会重新计算该效果修饰符返回的值
+
+```
+void UAuraAttributeSet :: PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data
+{
+Super: :PostGameplayEffectExecute(Data);
+FEffectProperties Props;
+SetEffectProperties(Data, [&] Props);
+
+if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+{
+SetHealth( NewVal: FMath :: Clamp(X:GetHealth(), Min:0.f, GetMaxHealth()));
+}
+if (Data.EvaluatedData.Attribute == GetManaAttribute())
+{
+SetMana ( NewVal:FMath :: Clamp(X:GetMana(), Min:0.f,GetMaxMana()));
+}
+}
+```
+
+## 8.1从数据表中初始化属性集
+
+```
+UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Strength, Category = "Primary Attributes")
+FGameplayAttributeData Strength;
+ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Strength);
+
+UPROPERTY(BlueprintReadOnly, ReplicatedUsing =OnRep_Intelligence, Category = "Primary Attributes")
+FGameplayAttributeData Intelligence;
+ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Intelligence);
+
+UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Resilience, Category = "Primary Attributes")
+FGameplayAttributeData Resilience;
+ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Resilience);
+
+UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Vigor, Category = "Primary Attributes")
+FGameplayAttributeData Vigor;
+ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Vigor);
+```
+
+将AbilitySystemComponent设为VisibleAnywhere
+
+新建一个数据表
+
+![image-20250819153825756](Aura Note.assets/image-20250819153825756-17555891217691.png)
+
+命名为DT_InitialPrimaryValues
+
+![image-20250819154123024](Aura Note.assets/image-20250819154123024.png)
+
+## 8.2使用游戏效果初始化数据
